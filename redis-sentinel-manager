@@ -17,7 +17,7 @@ CONSUL_HOST = ENV.fetch("CONSUL_HOST")
 CHECK_PORT = ENV.fetch("CHECK_PORT")
 
 # Interval that which each pod is evaluated
-INTERVAL = ENV.fetch("INTERVAL", 10)
+INTERVAL = ENV.fetch("INTERVAL", "10").to_i
 
 Diplomat.configure do |config|
   config.url = "http://#{CONSUL_HOST}:8500"
