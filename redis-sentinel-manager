@@ -26,12 +26,12 @@ end
 class Pod
 
   attr_reader :name, :service_name, :servers, :sentinels
-  attr_accessor :error
 
   def initialize(name)
     @name = name
     @service_name = "#{MASTER_CONSUL_SERVICE_PREFIX}#{name}"
     @servers = []
+    @error_lock = Mutex.new
   end
 
   def refresh_servers!
@@ -66,6 +66,14 @@ class Pod
       mstr = master
       sentinel.sentinel "monitor", name, mstr.client.host, mstr.client.port, QUORUM
     end
+  end
+
+  def error
+    @error_lock.synchronize { @error }
+  end
+
+  def error=(e)
+    @error_lock.synchronize { @error = e }
   end
 end
 
