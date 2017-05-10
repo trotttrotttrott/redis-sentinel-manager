@@ -83,7 +83,7 @@ REDIS_MASTERS.each do |master|
         next
       end
 
-      if pod.single_master?
+      if !pod.single_master?
         pod.error = "Many masters detected in #{pod.name}."
         sleep 10
         next
