@@ -16,6 +16,9 @@ CONSUL_HOST = ENV.fetch("CONSUL_HOST")
 # Port to expose http check
 CHECK_PORT = ENV.fetch("CHECK_PORT")
 
+# Interval that which each pod is evaluated
+INTERVAL = ENV.fetch("INTERVAL", 10)
+
 Diplomat.configure do |config|
   config.url = "http://#{CONSUL_HOST}:8500"
 end
@@ -84,13 +87,13 @@ REDIS_MASTERS.each do |master|
 
       if pod.servers.empty?
         pod.error = "No servers in #{pod.name}."
-        sleep 10
+        sleep INTERVAL
         next
       end
 
       if !pod.single_master?
         pod.error = "Many masters detected in #{pod.name}."
-        sleep 10
+        sleep INTERVAL
         next
       end
 
@@ -99,7 +102,7 @@ REDIS_MASTERS.each do |master|
       pod.refresh_sentinels!
       pod.configure_sentinels!
 
-      sleep 10
+      sleep INTERVAL
     end
   end
 end
