@@ -4,15 +4,20 @@ require "diplomat"
 require "redis"
 require "socket"
 
+# Redis/Sentinel
 REDIS_MASTERS = ENV.fetch("REDIS_MASTERS").split(" ")
 MASTER_CONSUL_SERVICE_PREFIX = ENV.fetch("MASTER_CONSUL_SERVICE_PREFIX")
 SENTINEL_SERVICE = ENV.fetch("SENTINEL_SERVICE")
 QUORUM = ENV.fetch("QUORUM")
-HOST = ENV.fetch("HOST")
+
+# Host where Consul API is running
+CONSUL_HOST = ENV.fetch("CONSUL_HOST")
+
+# Port to expose http check
 CHECK_PORT = ENV.fetch("CHECK_PORT")
 
 Diplomat.configure do |config|
-  config.url = "http://#{HOST}:8500"
+  config.url = "http://#{CONSUL_HOST}:8500"
 end
 
 class Pod
