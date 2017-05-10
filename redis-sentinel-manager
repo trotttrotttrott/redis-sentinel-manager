@@ -60,11 +60,10 @@ class Pod
 
   def configure_sentinels!
     sentinels.each do |sentinel|
-      next unless sentinel.sentinel("masters").include? do |master|
-        master["name"] == name
+      next unless sentinel.sentinel("masters").include? do |sentinel_master|
+        sentinel_master["name"] == name
       end
-      mstr = master
-      sentinel.sentinel "monitor", name, mstr.client.host, mstr.client.port, QUORUM
+      sentinel.sentinel "monitor", name, master.client.host, master.client.port, QUORUM
     end
   end
 
