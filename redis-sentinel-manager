@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+
+require "diplomat"
+require "redis"
+require "socket"
+
+REDIS_MASTERS = ENV.fetch("REDIS_MASTERS").split(" ")
+MASTER_CONSUL_SERVICE_PREFIX = ENV.fetch("MASTER_CONSUL_SERVICE_PREFIX")
+SENTINEL_SERVICE = ENV.fetch("SENTINEL_SERVICE")
+QUORUM = ENV.fetch("QUORUM")
+HOST = ENV.fetch("HOST")
+CHECK_PORT = ENV.fetch("CHECK_PORT")
+
+Diplomat.configure do |config|
+  config.url = "http://#{HOST}:8500"
+end
+
+class Pod
+
+  attr_reader :name, :service_name, :servers, :sentinels
+  attr_accessor :error
+
+  def initialize(name)
+    @name = name
+    @service_name = "#{MASTER_CONSUL_SERVICE_PREFIX}#{name}"
+    @servers = []
+  end
+
+  def refresh_servers!
+    servers = Diplomat::Service.get(service_name, :all).map do |node|
+      Redis.new host: node.Address, port:  node.ServicePort
+    end
+  end
+
+  def single_master?
+    servers.find_all do |server|
+      server.info["role"] == "master"
+    end.size == 1
+  end
+
+  def master
+    servers.find do |server|
+      server.info["role"] == "master"
+    end
+  end
+
+  def refresh_sentinels!
+    sentinels = Diplomat::Service.get(SENTINEL_SERVICE, :all).map do |node|
+      Redis.new host: node.Address, port:  node.ServicePort
+    end
+  end
+
+  def configure_sentinels!
+    sentinels.each do |sentinel|
+      next unless sentinel.sentinel("masters").include? do |master|
+        master["name"] == name
+      end
+      mstr = master
+      sentinel.sentinel "monitor", name, mstr.client.host, mstr.client.port, QUORUM
+    end
+  end
+end
+
+Thread.abort_on_exception = true
+
+threads = []
+pods = []
+
+REDIS_MASTERS.each do |master|
+
+  pods << Pod.new(master)
+  pod = pods.last
+
+  threads << Thread.new do
+
+    loop do
+
+      pod.refresh_servers!
+
+      if pod.servers.empty?
+        pod.error = "No servers in #{pod.name}."
+        sleep 10
+        next
+      end
+
+      if pod.single_master?
+        pod.error = "Many masters detected in #{pod.name}."
+        sleep 10
+        next
+      end
+
+      pod.error = nil
+
+      pod.refresh_sentinels!
+      pod.configure_sentinels!
+
+      sleep 10
+    end
+  end
+end
+
+http_health_check = TCPServer.new("0.0.0.0", CHECK_PORT)
+
+threads << Thread.new do
+  loop do
+    socket = http_health_check.accept
+    errors = pods.map do |pod|
+      pod.error
+    end.compact
+    status, body = if errors.empty?
+      ["200 OK", ""]
+    else
+      ["500 Internal Server Error" , errors.join(", ")]
+    end
+    socket.print <<-EOR
+HTTP/1.1 #{status}
+Content-Type: text/plain
+Content-Length: #{response.bytesize}
+Connection: close
+
+#{body}
+EOR
+    socket.close
+  end
+end
+
+threads.each(&:join)
