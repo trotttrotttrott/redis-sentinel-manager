@@ -8,6 +8,6 @@ RUN apk add --update ruby ruby-json less && \
 
 COPY redis-sentinel-manager /opt/redis-sentinel-manager/bin/
 
-ENV REDIS_MASTERS MASTER_CONSUL_SERVICE_PREFIX SENTINEL_SERVICE
+ENV REDIS_MASTERS MASTER_CONSUL_SERVICE_PREFIX SENTINEL_SERVICE QUORUM CONSUL_HOST CHECK_PORT INTERVAL
 
 CMD bin/redis-sentinel-manager
