@@ -46,7 +46,7 @@ class Pod
 
   def refresh_sentinels!
     sentinels = Diplomat::Service.get(SENTINEL_SERVICE, :all).map do |node|
-      Redis.new host: node.Address, port:  node.ServicePort
+      Redis.new host: node.Address, port: node.ServicePort
     end
   end
 
@@ -108,7 +108,7 @@ threads << Thread.new do
     status, body = if errors.empty?
       ["200 OK", ""]
     else
-      ["500 Internal Server Error" , errors.join(", ")]
+      ["500 Internal Server Error", errors.join(", ")]
     end
     socket.print <<-EOR
 HTTP/1.1 #{status}
