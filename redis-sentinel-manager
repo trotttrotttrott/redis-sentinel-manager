@@ -115,7 +115,7 @@ threads << Thread.new do
     socket.print <<-EOR
 HTTP/1.1 #{status}
 Content-Type: text/plain
-Content-Length: #{response.bytesize}
+Content-Length: #{body.bytesize}
 Connection: close
 
 #{body}
