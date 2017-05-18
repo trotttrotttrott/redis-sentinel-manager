@@ -104,9 +104,16 @@ REDIS_MASTERS.each do |master|
         next
       end
 
+      pod.refresh_sentinels!
+
+      if pod.sentinels.count < QUORUM.to_i
+        pod.error = "There are #{pod.sentinels.count} sentinels. Cannot failover #{pod.name} when the quorum is set to #{QUORUM}."
+        sleep INTERVAL
+        next
+      end
+
       pod.error = nil
 
-      pod.refresh_sentinels!
       pod.configure_sentinels!
 
       sleep INTERVAL
