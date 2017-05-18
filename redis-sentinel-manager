@@ -35,7 +35,7 @@ class Pod
   end
 
   def refresh_servers!
-    servers = Diplomat::Service.get(service_name, :all).map do |node|
+    @servers = Diplomat::Service.get(service_name, :all).map do |node|
       Redis.new host: node.Address, port:  node.ServicePort
     end
   end
@@ -53,7 +53,7 @@ class Pod
   end
 
   def refresh_sentinels!
-    sentinels = Diplomat::Service.get(SENTINEL_SERVICE, :all).map do |node|
+    @sentinels = Diplomat::Service.get(SENTINEL_SERVICE, :all).map do |node|
       Redis.new host: node.Address, port: node.ServicePort
     end
   end
