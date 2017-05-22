@@ -128,7 +128,7 @@ threads << Thread.new do
     socket = http_health_check.accept
     errors = pods.map(&:error).compact
     status, body = if errors.empty?
-      ["200 OK", "Pods and sentinels are configured as expected."]
+      ["200 OK", "Monitoring #{REDIS_MASTERS}."]
     else
       ["500 Internal Server Error", errors.join(", ")]
     end
