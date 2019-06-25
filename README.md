@@ -1,10 +1,7 @@
 # Redis Sentinel Manager
 
-Will tell Sentinels which masters to monitor based on existing Consul nodes and associated services.
+Service intended to be launched alongside [Redis](https://redis.io/) pods and [Sentinel](https://redis.io/topics/sentinel) constellations for dynamic configuration management and monitoring.
 
-Also makes sure that:
-
-* All configured Redis pods exist.
-* All pods are replicating properly by making sure only 1 master exists.
-
-Misconfigurations can be monitored with builtin http check.
+* It dynamically configures Sentinel masters based on [Consul](https://www.consul.io/) catalog.
+* Monitors that all configured Redis pods exist.
+* Monitors that all pods are replicating properly by making sure only 1 master exists.
